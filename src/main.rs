@@ -35,30 +35,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut ended = false;
         while !ended {
             let tr = conn.transaction().unwrap();
-            {
-                let mut statement = tr
-                    .prepare("insert into insert_test(coords) values(?)")
-                    .unwrap();
-                while let Some(cmd) = rx.blocking_recv() {
-                    match cmd {
-                        Command::Tick() => {
-                            println!("TICK");
-                            break;
-                        }
-                        Command::Value(v1, v2) => {
-                            counter += 1;
-                            let v = format!("'{}, {}'", v1, v2);
-                            //tr.execute("insert into insert_test(coords) values (?)", params![v])
-                            //    .unwrap();
-                            statement.execute(&[v]);
-                        }
-                        Command::End() => {
-                            ended = true;
-                            break;
-                        }
+            while let Some(cmd) = rx.blocking_recv() {
+                match cmd {
+                    Command::Tick() => {
+                        println!("TICK");
+                        break;
+                    }
+                    Command::Value(v1, v2) => {
+                        counter += 1;
+                        let v = format!("'{}, {}'", v1, v2);
+                        tr.execute("insert into insert_test(coords) values (?)", params![v])
+                            .unwrap();
+                    }
+                    Command::End() => {
+                        ended = true;
+                        break;
                     }
                 }
             }
+            //          }
             tr.commit().unwrap();
         }
         println!(
