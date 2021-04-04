@@ -1,0 +1,11 @@
+[package]
+name = "rust-tokio-sqlite"
+version = "0.1.0"
+authors = ["varrocs <varrocs@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "1.4", features = ["full"] }
+rusqlite = "0.24.2"
