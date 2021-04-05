@@ -9,6 +9,9 @@ enum Command {
     End(),
 }
 
+const FEEDERS: i32 = 200;
+const FEEDER_SLEEP_MS: u64 = 50;
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (tx, mut rx) = mpsc::channel(32);
@@ -67,23 +70,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tokio::spawn(async move {
         loop {
             sleep(Duration::from_millis(1000)).await;
-            tx_timer.send(Command::Tick()).await;
+            tx_timer.send(Command::Tick()).await.ok();
         }
     });
 
     // Feeder tasks
-    for i in 1..50 {
+    for i in 1..FEEDERS {
         let tx_feeder = tx.clone();
         tokio::spawn(async move {
             loop {
-                sleep(Duration::from_millis(100)).await;
-                tx_feeder.send(Command::Value(i, 299)).await;
+                sleep(Duration::from_millis(FEEDER_SLEEP_MS)).await;
+                tx_feeder.send(Command::Value(i, 299)).await.ok();
             }
         });
     }
 
     sleep(Duration::from_millis(10000)).await;
-    tx.send(Command::End()).await;
+    tx.send(Command::End()).await.ok();
     sleep(Duration::from_millis(100)).await;
     Ok(())
 }
