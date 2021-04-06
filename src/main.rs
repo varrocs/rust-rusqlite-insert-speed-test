@@ -9,8 +9,10 @@ enum Command {
     End(),
 }
 
-const FEEDERS: i32 = 200;
-const FEEDER_SLEEP_MS: u64 = 50;
+const FEEDERS: i32 = 1200;
+const FEEDER_SLEEP_MS: u64 = 10;
+const COMMIT_HEARTBEAT_MS: u64 = 1000;
+const FULL_TIME: u64 = 10000;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -64,12 +66,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             counter,
             start.elapsed().as_millis()
         );
+        println!(
+            "Should have {} in {} millisecs",
+            (FEEDERS as u64 * FULL_TIME / FEEDER_SLEEP_MS),
+            FULL_TIME
+        );
     });
 
     // Heartbeat task
     tokio::spawn(async move {
         loop {
-            sleep(Duration::from_millis(1000)).await;
+            sleep(Duration::from_millis(COMMIT_HEARTBEAT_MS)).await;
             tx_timer.send(Command::Tick()).await.ok();
         }
     });
@@ -85,7 +92,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         });
     }
 
-    sleep(Duration::from_millis(10000)).await;
+    sleep(Duration::from_millis(FULL_TIME)).await;
     tx.send(Command::End()).await.ok();
     sleep(Duration::from_millis(100)).await;
     Ok(())
